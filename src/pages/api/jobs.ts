@@ -18,29 +18,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       extraFilter.source = { $in: sources };
     }
 
-    // Filtro por modalidad: "Remoto", "Híbrido", o ambos
+    // Filtro por modalidad: "Remoto", "Híbrido", "Presencial"
     if (modality) {
       const modes = (modality as string).split(',').map((m) => m.trim());
-      // Para datos nuevos usamos el campo modality (exacto de la API).
-      // Para datos viejos sin campo modality, solo usamos la URL como fallback
-      // (más confiable que la descripción, que puede mencionar "remoto" en cualquier contexto).
       const orConditions: any[] = [];
       for (const mode of modes) {
-        // Match exacto del campo modality guardado
-        orConditions.push({ modality: { $regex: `^${mode}$`, $options: 'i' } });
-        // Fallback para registros viejos sin campo modality: solo URL para Remoto
         if (/remot/i.test(mode)) {
-          orConditions.push({
-            modality: { $exists: false },
-            url: { $regex: 'remot', $options: 'i' },
-          });
-          orConditions.push({
-            modality: '',
-            url: { $regex: 'remot', $options: 'i' },
-          });
+          // Captura: "Remoto", "100% Remoto", "En modalidad remota", "Home Office", etc.
+          orConditions.push({ modality: { $regex: 'remot|home.?office', $options: 'i' } });
+        } else if (/h[ií]brid/i.test(mode)) {
+          orConditions.push({ modality: { $regex: 'h[ií]brid', $options: 'i' } });
+        } else if (/presencial/i.test(mode)) {
+          orConditions.push({ modality: { $regex: 'presencial|on.?site|oficina', $options: 'i' } });
         }
       }
-      extraFilter.$or = orConditions;
+      if (orConditions.length > 0) {
+        extraFilter.$or = orConditions;
+      }
     }
 
     let jobs;
