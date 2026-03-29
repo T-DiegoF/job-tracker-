@@ -138,26 +138,42 @@ export async function searchJobs(searchTerm: string, extraFilter: any = {}) {
   }
 }
 
+function matchFieldFilter(jobVal: string, fieldFilter: any): boolean {
+  if (fieldFilter.$regex !== undefined) {
+    return new RegExp(fieldFilter.$regex, fieldFilter.$options || '').test(jobVal);
+  }
+  if (fieldFilter.$not !== undefined) {
+    return !matchFieldFilter(jobVal, fieldFilter.$not);
+  }
+  if (fieldFilter.$in !== undefined) {
+    return fieldFilter.$in.includes(jobVal);
+  }
+  return jobVal === fieldFilter;
+}
+
+function matchCondition(job: any, condition: any): boolean {
+  return Object.entries(condition).every(([field, fieldFilter]: [string, any]) => {
+    const jobVal = job[field] ?? '';
+    return matchFieldFilter(String(jobVal), fieldFilter);
+  });
+}
+
 function applyInMemoryFilter(jobs: any[], filter: any): any[] {
   if (!filter || Object.keys(filter).length === 0) return jobs;
 
   return jobs.filter((job) => {
     for (const [key, value] of Object.entries(filter)) {
       if (key === '$or') {
-        // Soporte básico para $or
-        const orConditions = value as any[];
-        const matches = orConditions.some((condition) => {
-          return Object.entries(condition).every(([field, fieldFilter]: [string, any]) => {
-            const jobVal = job[field] || '';
-            if (fieldFilter.$regex) {
-              return new RegExp(fieldFilter.$regex, fieldFilter.$options || '').test(jobVal);
-            }
-            return jobVal === fieldFilter;
-          });
+        const matches = (value as any[]).some((cond) => matchCondition(job, cond));
+        if (!matches) return false;
+      } else if (key === '$and') {
+        const matches = (value as any[]).every((cond) => {
+          if ('$or' in cond) return (cond.$or as any[]).some((c: any) => matchCondition(job, c));
+          return matchCondition(job, cond);
         });
         if (!matches) return false;
-      } else if (typeof value === 'object' && value !== null && '$in' in (value as any)) {
-        if (!(value as any).$in.includes(job[key])) return false;
+      } else if (typeof value === 'object' && value !== null) {
+        if (!matchFieldFilter(String(job[key] ?? ''), value as any)) return false;
       } else {
         if (job[key] !== value) return false;
       }
