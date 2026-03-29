@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Job Finder</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<h1>💼 Job Finder</h1>
+<div id="jobs" class="grid"></div>
+
+<script>
+async function loadJobs() {
+  const res = await fetch("/api/jobs");
+  const data = await res.json();
+
+  const container = document.getElementById("jobs");
+
+  data.jobs.forEach(job => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="title">${job.title}</div>
+      <div class="company">${job.company || ""}</div>
+      <div>${job.source}</div>
+    `;
+
+    card.onclick = () => {
+      if (job.url) window.open(job.url, "_blank");
+    };
+
+    container.appendChild(card);
+  });
+}
+
+loadJobs();
+</script>
+</body>
+</html>

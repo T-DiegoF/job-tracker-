@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "functions": {
+    "src/pages/api/scrape.ts": {
+      "maxDuration": 300
+    }
+  }
+}
+

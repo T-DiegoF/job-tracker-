@@ -1,0 +1,48 @@
+{
+  "name": "jobs-scraper",
+  "version": "1.0.0",
+  "description": "A Next.js application to display job offers for backend developers and software engineers.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "^143.0.4",
+    "axios": "^0.21.1",
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^17.3.1",
+    "mongoose": "^9.3.1",
+    "next": "latest",
+    "playwright": "^1.58.2",
+    "playwright-core": "^1.58.2",
+    "puppeteer": "^24.40.0",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "latest",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "jobs",
+    "scraper",
+    "nextjs",
+    "react",
+    "backend developer",
+    "software engineer",
+    "Node.js",
+    "Nest.js"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
