@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Job } from '@/types/job';
 
 interface JobCardProps extends Job {}
@@ -15,9 +15,12 @@ const MODALITY_STYLES: Record<string, { color: string; icon: string }> = {
   Presencial: { color: '#ffd166', icon: '⊞' },
 };
 
+
 const JobCard: React.FC<JobCardProps> = ({
   title, company, location, source, url, salary, jobType, modality, description,
 }) => {
+  const [logoError, setLogoError] = useState(false);
+
   const handleClick = () => window.open(url, '_blank');
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') handleClick();
@@ -25,6 +28,11 @@ const JobCard: React.FC<JobCardProps> = ({
 
   const src = SOURCE_STYLES[source] ?? { glow: '#9ba3c9', color: '#9ba3c9', label: source?.slice(0, 2).toUpperCase() };
   const mod = modality ? MODALITY_STYLES[modality] ?? { color: '#9ba3c9', icon: '○' } : null;
+
+  // Build Clearbit logo URL from company name (more reliable than job portal URL)
+  const companySlug = company.toLowerCase().replaceAll(/\s+/g, '').replaceAll(/[^a-z0-9]/g, '');
+  const logoUrl = `https://logo.clearbit.com/${companySlug}.com`;
+  const initials = company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
   return (
     <button
@@ -39,6 +47,20 @@ const JobCard: React.FC<JobCardProps> = ({
       <div className="card-body">
         {/* Header row */}
         <div className="card-header">
+          {/* Company logo */}
+          <div className="logo-wrap" style={{ borderColor: `${src.color}30` }}>
+            {logoError ? (
+              <span className="logo-initials" style={{ color: src.color }}>{initials}</span>
+            ) : (
+              <img
+                src={logoUrl}
+                alt={company}
+                className="logo-img"
+                onError={() => setLogoError(true)}
+              />
+            )}
+          </div>
+
           <div className="source-badge" style={{
             background: `${src.color}18`,
             border: `1px solid ${src.color}40`,
@@ -113,6 +135,30 @@ const JobCard: React.FC<JobCardProps> = ({
           align-items: center;
           gap: 8px;
           margin-bottom: 2px;
+        }
+        .logo-wrap {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          border: 1px solid;
+          background: rgba(255,255,255,0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .logo-img {
+          width: 28px;
+          height: 28px;
+          object-fit: contain;
+          border-radius: 4px;
+        }
+        .logo-initials {
+          font-size: 12px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.5px;
         }
         .source-badge {
           font-size: 10px;
