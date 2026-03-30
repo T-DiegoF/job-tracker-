@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import { Job } from '@/types/job';
 
 interface JobCardProps extends Job {}
@@ -17,11 +18,12 @@ const MODALITY_STYLES: Record<string, { color: string; icon: string }> = {
 
 
 const JobCard: React.FC<JobCardProps> = ({
-  title, company, location, source, url, salary, jobType, modality, description,
+  _id, title, company, location, source, url, salary, jobType, modality, description,
 }) => {
   const [logoError, setLogoError] = useState(false);
+  const router = useRouter();
 
-  const handleClick = () => window.open(url, '_blank');
+  const handleClick = () => router.push(`/job/${encodeURIComponent(_id || url)}`);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') handleClick();
   };
