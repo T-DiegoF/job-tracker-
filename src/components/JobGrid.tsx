@@ -90,6 +90,7 @@ const JobGrid: React.FC = () => {
             placeholder="Buscar por título, empresa o descripción…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleScrape()}
             className="search-input"
           />
           {searchTerm && (
