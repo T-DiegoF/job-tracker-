@@ -77,11 +77,21 @@ export default function JobDetail() {
   const mod = job.modality ? MODALITY_STYLES[job.modality] ?? { color: '#9ba3c9', icon: '○' } : null;
   const logoUrl = src.domain ? `https://www.google.com/s2/favicons?domain=${src.domain}&sz=64` : '';
 
-  const linkedinUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(
-    `${job.company} talent acquisition recruiter`
-  )}&origin=GLOBAL_SEARCH_HEADER`;
-
   const linkedinCompanyUrl = `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(job.company)}`;
+
+  // LinkedIn People Search URLs — filtered by company + role + Argentina (geoUrn 103323778)
+  const liPeople = (role: string) => {
+    const kw = encodeURIComponent('"' + role + '" "' + job.company + '"');
+    return 'https://www.linkedin.com/search/results/people/?keywords=' + kw + '&geoUrn=%5B%22103323778%22%5D&origin=FACETED_SEARCH';
+  };
+
+  const recruiterLinks = [
+    { icon: '🔍', title: 'Recruiter',           sub: 'Personas con rol Recruiter',           url: liPeople('Recruiter') },
+    { icon: '🎯', title: 'Talent Acquisition',  sub: 'Personas con rol Talent Acquisition',  url: liPeople('Talent Acquisition') },
+    { icon: '🧲', title: 'Technical Recruiter', sub: 'Personas con rol Technical Recruiter', url: liPeople('Technical Recruiter') },
+    { icon: '👥', title: 'HRBP / HR Manager',   sub: 'Personas con rol HRBP o HR Manager',   url: liPeople('HRBP') },
+    { icon: '🏢', title: 'Página de empresa',   sub: 'Ver ' + job.company + ' en LinkedIn',  url: linkedinCompanyUrl },
+  ];
 
   return (
     <div className="page">
@@ -131,7 +141,7 @@ export default function JobDetail() {
               <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ background: `linear-gradient(135deg, ${src.color}, ${src.color}bb)` }}>
                 Ver oferta original →
               </a>
-              <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="btn-linkedin">
+              <a href={recruiterLinks[0].url} target="_blank" rel="noopener noreferrer" className="btn-linkedin">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 Buscar reclutadores
               </a>
@@ -162,53 +172,15 @@ export default function JobDetail() {
             </p>
 
             <div className="recruiter-links">
-              <a
-                href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`recruiter ${job.company}`)}&origin=GLOBAL_SEARCH_HEADER`}
-                target="_blank" rel="noopener noreferrer"
-                className="recruiter-link"
-              >
-                <span className="recruiter-link-icon">🔍</span>
-                <div>
-                  <div className="recruiter-link-title">Recruiters</div>
-                  <div className="recruiter-link-sub">Buscar "Recruiter" en {job.company}</div>
-                </div>
-              </a>
-
-              <a
-                href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`talent acquisition ${job.company}`)}&origin=GLOBAL_SEARCH_HEADER`}
-                target="_blank" rel="noopener noreferrer"
-                className="recruiter-link"
-              >
-                <span className="recruiter-link-icon">🎯</span>
-                <div>
-                  <div className="recruiter-link-title">Talent Acquisition</div>
-                  <div className="recruiter-link-sub">Buscar "Talent Acquisition" en {job.company}</div>
-                </div>
-              </a>
-
-              <a
-                href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`HRBP HR ${job.company}`)}&origin=GLOBAL_SEARCH_HEADER`}
-                target="_blank" rel="noopener noreferrer"
-                className="recruiter-link"
-              >
-                <span className="recruiter-link-icon">👥</span>
-                <div>
-                  <div className="recruiter-link-title">HRBP / HR</div>
-                  <div className="recruiter-link-sub">Buscar HR en {job.company}</div>
-                </div>
-              </a>
-
-              <a
-                href={linkedinCompanyUrl}
-                target="_blank" rel="noopener noreferrer"
-                className="recruiter-link company-link"
-              >
-                <span className="recruiter-link-icon">🏢</span>
-                <div>
-                  <div className="recruiter-link-title">Página de empresa</div>
-                  <div className="recruiter-link-sub">Ver {job.company} en LinkedIn</div>
-                </div>
-              </a>
+              {recruiterLinks.map(link => (
+                <a key={link.title} href={link.url} target="_blank" rel="noopener noreferrer" className="recruiter-link">
+                  <span className="recruiter-link-icon">{link.icon}</span>
+                  <div>
+                    <div className="recruiter-link-title">{link.title}</div>
+                    <div className="recruiter-link-sub">{link.sub}</div>
+                  </div>
+                </a>
+              ))}
             </div>
 
             <div className="tip">
