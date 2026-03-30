@@ -40,7 +40,12 @@ const JobGrid: React.FC = () => {
     setScrapeMsg('');
     setError('');
     try {
-      const response = await fetch('/api/scrape', { method: 'POST' });
+      const keyword = searchTerm.trim() || 'node';
+      const response = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: [keyword] }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Error en scraping');
       setScrapeMsg(data.message || 'Scraping completado');

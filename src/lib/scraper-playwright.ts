@@ -1,10 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { saveJob, connectDB } from './db';
 
-const NODEJS_REGEX = /node\.?js|nodejs/i;
-
-function containsNodeJS(text: string): boolean {
-  return NODEJS_REGEX.test(text);
+function buildKeywordRegex(keywords: string[]): RegExp {
+  const escaped = keywords.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(escaped.join('|'), 'i');
 }
 
 function naventHeaders(siteId: string, origin: string): Record<string, string> {
@@ -28,12 +27,13 @@ async function scrapeNavent(
   sourceName: string,
   urlTemplate: (slug: string, id: number) => string,
   portalFilter: string,    // solo incluir ofertas donde job.portal === portalFilter
+  keywords: string[],
 ): Promise<any[]> {
   const jobs: any[] = [];
   console.log(`\n📌 ${sourceName} (Navent API)...`);
   const seen = new Set<string>();
 
-  for (const keyword of ['node', 'node.js', 'node js']) {
+  for (const keyword of keywords) {
     try {
       const r = await fetch(
         `${origin}/api/avisos/searchV2?pageSize=50&page=0&sort=RELEVANTES`,
@@ -54,7 +54,7 @@ async function scrapeNavent(
 
         const title: string = job.titulo ?? '';
         const desc: string = job.detalle ?? '';
-        if (!containsNodeJS(title + ' ' + desc)) continue;
+        if (!buildKeywordRegex(keywords).test(title + ' ' + desc)) continue;
 
         const slug = title
           .toLowerCase()
@@ -89,30 +89,32 @@ async function scrapeNavent(
   return jobs;
 }
 
-async function scrapeBumeran(): Promise<any[]> {
+async function scrapeBumeran(keywords: string[]): Promise<any[]> {
   return scrapeNavent(
     'BMAR',
     'https://www.bumeran.com.ar',
     'Bumeran',
     (slug, id) => `https://www.bumeran.com.ar/empleos/${slug}-${id}.html`,
     'bumeran',
+    keywords,
   );
 }
 
-async function scrapeZonaJobs(): Promise<any[]> {
+async function scrapeZonaJobs(keywords: string[]): Promise<any[]> {
   return scrapeNavent(
     'ZJAR',
     'https://www.zonajobs.com.ar',
     'ZonaJobs',
     (slug, id) => `https://www.zonajobs.com.ar/empleos/${slug}-${id}.html`,
     'zonajobs',
+    keywords,
   );
 }
 
 // ─────────────────────────────────────────────
 //  COMPUTRABAJO — HTML listing + API de detalle
 // ─────────────────────────────────────────────
-async function scrapeComputrabajo(): Promise<any[]> {
+async function scrapeComputrabajo(keywords: string[]): Promise<any[]> {
   const jobs: any[] = [];
   console.log('\n📌 Computrabajo...');
 
@@ -122,10 +124,9 @@ async function scrapeComputrabajo(): Promise<any[]> {
     'accept-language': 'es-AR,es;q=0.9',
   };
 
-  const searchUrls = [
-    'https://ar.computrabajo.com/trabajo-de-nodejs',
-    'https://ar.computrabajo.com/trabajo-de-node-js',
-  ];
+  const searchUrls = keywords.map(
+    (kw) => `https://ar.computrabajo.com/trabajo-de-${kw.toLowerCase().replace(/\s+/g, '-')}`
+  );
 
   // IDs únicos de ofertas (hash de 32 chars al final de la URL)
   const offerIds = new Set<string>();
@@ -152,7 +153,7 @@ async function scrapeComputrabajo(): Promise<any[]> {
   // Usar la API JSON de detalle directamente
   for (const offerId of Array.from(offerIds).slice(0, 30)) {
     const jobData = await fetchComputrabajoOffer(offerId, fetchHeaders);
-    if (jobData && containsNodeJS(jobData.title + ' ' + jobData.description)) {
+    if (jobData && buildKeywordRegex(keywords).test(jobData.title + ' ' + jobData.description)) {
       const record = { ...jobData, source: 'Computrabajo' };
       await saveJob(record);
       jobs.push(record);
@@ -212,10 +213,10 @@ async function fetchComputrabajoOffer(offerId: string, headers: Record<string, s
 // ─────────────────────────────────────────────
 //  ENTRY POINT
 // ─────────────────────────────────────────────
-export async function scrapeAllJobs(): Promise<any[]> {
-  console.log('\n╔══════════════════════════════════════════╗');
-  console.log('║   🚀 SCRAPING Node.js Jobs               ║');
-  console.log('╚══════════════════════════════════════════╝');
+export async function scrapeAllJobs(keywords: string[] = ['node', 'node.js', 'node js']): Promise<any[]> {
+  console.log(`\n╔══════════════════════════════════════════╗`);
+  console.log(`║   🚀 SCRAPING: ${keywords.join(', ').substring(0, 24).padEnd(24)} ║`);
+  console.log(`╚══════════════════════════════════════════╝`);
 
   await connectDB();
   const allJobs: any[] = [];
@@ -224,15 +225,15 @@ export async function scrapeAllJobs(): Promise<any[]> {
     ['Bumeran', scrapeBumeran],
     ['ZonaJobs', scrapeZonaJobs],
     ['Computrabajo', scrapeComputrabajo],
-  ] as [string, () => Promise<any[]>][]) {
+  ] as [string, (kw: string[]) => Promise<any[]>][]) {
     try {
-      allJobs.push(...await fn());
+      allJobs.push(...await fn(keywords));
     } catch (e: any) {
       console.error(`❌ ${name}:`, e?.message);
     }
   }
 
-  console.log(`\n✅ Total: ${allJobs.length} Node.js jobs\n`);
+  console.log(`\n✅ Total: ${allJobs.length} jobs encontrados\n`);
   return allJobs;
 }
 

@@ -13,14 +13,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   isScrapingInProgress = true;
-  console.log('\n🔥 Iniciando scraping de Node.js jobs...');
+
+  const { keywords } = req.body || {};
+  const parsedKeywords: string[] = Array.isArray(keywords) && keywords.length > 0
+    ? keywords.map((k: string) => String(k).trim()).filter(Boolean)
+    : ['node', 'node.js', 'node js'];
+
+  console.log(`\n🔥 Iniciando scraping: ${parsedKeywords.join(', ')}`);
 
   try {
-    const jobs = await scrapeAllJobs();
+    const jobs = await scrapeAllJobs(parsedKeywords);
 
     return res.status(200).json({
       success: true,
-      message: `Scraping completado. ${jobs.length} ofertas Node.js encontradas.`,
+      message: `Scraping completado. ${jobs.length} ofertas encontradas para: ${parsedKeywords.join(', ')}.`,
       jobsCount: jobs.length,
     });
   } catch (error: any) {
