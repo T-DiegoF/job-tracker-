@@ -16,19 +16,30 @@ const MODALITY_STYLES: Record<string, { color: string; icon: string }> = {
 
 export default function JobDetail() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, data } = router.query;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+
+    // Use inline data from navigation if available (avoids API call)
+    if (data) {
+      try {
+        setJob(JSON.parse(data as string));
+        setLoading(false);
+        return;
+      } catch { /* fall through to fetch */ }
+    }
+
+    // Fallback: fetch from API (e.g. on page reload)
     setLoading(true);
     fetch(`/api/jobs/${encodeURIComponent(id as string)}`)
       .then(r => r.json())
-      .then(data => { setJob(data.job); setLoading(false); })
+      .then(d => { setJob(d.job ?? null); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, data]);
 
   if (loading) return (
     <div className="page-center">
@@ -48,11 +59,16 @@ export default function JobDetail() {
 
   if (!job) return (
     <div className="page-center">
-      <p style={{ color: 'var(--text-mid)' }}>Oferta no encontrada.</p>
-      <button onClick={() => router.push('/')} className="back-btn">← Volver</button>
+      <div style={{ fontSize: '40px', marginBottom: '8px' }}>◈</div>
+      <p style={{ color: 'var(--text-mid)', fontSize: '15px', fontWeight: 500 }}>No se pudo cargar la oferta</p>
+      <p style={{ color: 'var(--text-dim)', fontSize: '13px' }}>Podés ver la oferta original directamente en el portal.</p>
+      <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+        <button onClick={() => router.push('/')} className="back-btn">← Volver al listado</button>
+      </div>
       <style jsx>{`
-        .page-center { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:16px; }
-        .back-btn { padding:10px 20px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--text-mid); cursor:pointer; }
+        .page-center { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:10px; text-align:center; padding:20px; }
+        .back-btn { padding:10px 20px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--text-mid); cursor:pointer; font-size:13px; transition:all 0.2s; }
+        .back-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
       `}</style>
     </div>
   );

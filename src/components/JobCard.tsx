@@ -23,7 +23,10 @@ const JobCard: React.FC<JobCardProps> = ({
   const [logoError, setLogoError] = useState(false);
   const router = useRouter();
 
-  const handleClick = () => router.push(`/job/${encodeURIComponent(_id || url)}`);
+  const handleClick = () => router.push({
+    pathname: `/job/${encodeURIComponent(_id || url)}`,
+    query: { data: JSON.stringify({ _id, title, company, location, source, url, salary, jobType, modality, description }) },
+  });
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') handleClick();
   };
