@@ -3,10 +3,10 @@ import { Job } from '@/types/job';
 
 interface JobCardProps extends Job {}
 
-const SOURCE_STYLES: Record<string, { glow: string; label: string; color: string }> = {
-  Bumeran:      { glow: '#7c6fff', color: '#7c6fff', label: 'BU' },
-  ZonaJobs:     { glow: '#ff6b9d', color: '#ff6b9d', label: 'ZJ' },
-  Computrabajo: { glow: '#06d6c7', color: '#06d6c7', label: 'CT' },
+const SOURCE_STYLES: Record<string, { glow: string; label: string; color: string; domain: string }> = {
+  Bumeran:      { glow: '#7c6fff', color: '#7c6fff', label: 'BU', domain: 'bumeran.com.ar' },
+  ZonaJobs:     { glow: '#ff6b9d', color: '#ff6b9d', label: 'ZJ', domain: 'zonajobs.com.ar' },
+  Computrabajo: { glow: '#06d6c7', color: '#06d6c7', label: 'CT', domain: 'computrabajo.com.ar' },
 };
 
 const MODALITY_STYLES: Record<string, { color: string; icon: string }> = {
@@ -26,13 +26,13 @@ const JobCard: React.FC<JobCardProps> = ({
     if (e.key === 'Enter' || e.key === ' ') handleClick();
   };
 
-  const src = SOURCE_STYLES[source] ?? { glow: '#9ba3c9', color: '#9ba3c9', label: source?.slice(0, 2).toUpperCase() };
+  const src = SOURCE_STYLES[source] ?? { glow: '#9ba3c9', color: '#9ba3c9', label: source?.slice(0, 2).toUpperCase(), domain: '' };
   const mod = modality ? MODALITY_STYLES[modality] ?? { color: '#9ba3c9', icon: '○' } : null;
 
-  // Build Clearbit logo URL from company name (more reliable than job portal URL)
-  const companySlug = company.toLowerCase().replaceAll(/\s+/g, '').replaceAll(/[^a-z0-9]/g, '');
-  const logoUrl = `https://logo.clearbit.com/${companySlug}.com`;
-  const initials = company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const logoUrl = src.domain
+    ? `https://www.google.com/s2/favicons?domain=${src.domain}&sz=64`
+    : '';
+  const initials = source.slice(0, 2).toUpperCase();
 
   return (
     <button
