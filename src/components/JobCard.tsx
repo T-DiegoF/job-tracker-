@@ -3,16 +3,16 @@ import { Job } from '@/types/job';
 
 interface JobCardProps extends Job {}
 
-const SOURCE_STYLES: Record<string, { color: string; label: string }> = {
-  Bumeran:      { color: '#6c8dfa', label: 'BU' },
-  ZonaJobs:     { color: '#f472b6', label: 'ZJ' },
-  Computrabajo: { color: '#34d399', label: 'CT' },
+const SOURCE_STYLES: Record<string, { glow: string; label: string; color: string }> = {
+  Bumeran:      { glow: '#7c6fff', color: '#7c6fff', label: 'BU' },
+  ZonaJobs:     { glow: '#ff6b9d', color: '#ff6b9d', label: 'ZJ' },
+  Computrabajo: { glow: '#06d6c7', color: '#06d6c7', label: 'CT' },
 };
 
 const MODALITY_STYLES: Record<string, { color: string; icon: string }> = {
-  Remoto:     { color: '#34d399', icon: '⌂' },
-  Híbrido:    { color: '#a78bfa', icon: '⇄' },
-  Presencial: { color: '#fb923c', icon: '⊞' },
+  Remoto:     { color: '#06d6c7', icon: '⌂' },
+  Híbrido:    { color: '#7c6fff', icon: '⇄' },
+  Presencial: { color: '#ffd166', icon: '⊞' },
 };
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -23,136 +23,176 @@ const JobCard: React.FC<JobCardProps> = ({
     if (e.key === 'Enter' || e.key === ' ') handleClick();
   };
 
-  const src = SOURCE_STYLES[source] ?? { color: '#7a809a', label: source?.slice(0, 2).toUpperCase() };
-  const mod = modality ? MODALITY_STYLES[modality] ?? { color: '#7a809a', icon: '○' } : null;
+  const src = SOURCE_STYLES[source] ?? { glow: '#9ba3c9', color: '#9ba3c9', label: source?.slice(0, 2).toUpperCase() };
+  const mod = modality ? MODALITY_STYLES[modality] ?? { color: '#9ba3c9', icon: '○' } : null;
 
   return (
-    <button onClick={handleClick} onKeyDown={handleKeyDown} className="card" aria-label={`Ver oferta: ${title} en ${company}`}>
-      <div className="card-inner">
-        {/* Source dot */}
-        <div className="source-dot" style={{ background: src.color }} title={source}>
-          {src.label}
+    <button
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className="card"
+      aria-label={`Ver oferta: ${title} en ${company}`}
+    >
+      {/* Top accent line */}
+      <div className="accent-line" style={{ background: `linear-gradient(90deg, ${src.color}, transparent)` }} />
+
+      <div className="card-body">
+        {/* Header row */}
+        <div className="card-header">
+          <div className="source-badge" style={{
+            background: `${src.color}18`,
+            border: `1px solid ${src.color}40`,
+            color: src.color,
+            boxShadow: `0 0 12px ${src.color}20`,
+          }}>
+            {src.label}
+          </div>
+          {mod && (
+            <div className="modality-badge" style={{ color: mod.color, borderColor: `${mod.color}35`, background: `${mod.color}10` }}>
+              {mod.icon} {modality}
+            </div>
+          )}
         </div>
 
-        <div className="content">
-          <div className="title">{title}</div>
-          <div className="company">{company}</div>
+        {/* Content */}
+        <div className="title">{title}</div>
+        <div className="company">{company}</div>
 
-          <div className="meta">
-            {modality && mod && (
-              <span className="tag" style={{ color: mod.color, borderColor: `${mod.color}33`, background: `${mod.color}11` }}>
-                {mod.icon} {modality}
-              </span>
-            )}
-            {location && (
-              <span className="tag location">{location}</span>
-            )}
-            {jobType && (
-              <span className="tag">{jobType}</span>
-            )}
-            {salary && (
-              <span className="tag salary">{salary}</span>
-            )}
-          </div>
+        {/* Tags */}
+        <div className="tags">
+          {location && <span className="tag">{location}</span>}
+          {jobType  && <span className="tag">{jobType}</span>}
+          {salary   && <span className="tag salary">{salary}</span>}
+        </div>
 
-          {description && (
-            <p className="description">{description.substring(0, 110)}…</p>
-          )}
+        {description && (
+          <p className="description">{description.substring(0, 110)}…</p>
+        )}
+
+        {/* Footer */}
+        <div className="card-footer">
+          <span className="view-link">Ver oferta →</span>
         </div>
       </div>
 
       <style jsx>{`
         .card {
-          background: var(--surface);
+          position: relative;
+          background: var(--glass);
+          backdrop-filter: var(--blur);
+          -webkit-backdrop-filter: var(--blur);
           border: 1px solid var(--border);
-          border-radius: 12px;
+          border-radius: 16px;
           cursor: pointer;
           text-align: left;
           width: 100%;
           padding: 0;
-          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-          position: relative;
+          transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
           overflow: hidden;
-        }
-        .card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, transparent 60%, rgba(108,141,250,0.04) 100%);
-          pointer-events: none;
         }
         .card:hover {
-          border-color: var(--accent);
-          transform: translateY(-3px);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);
+          transform: translateY(-4px) scale(1.01);
+          border-color: var(--border-h);
+          box-shadow:
+            0 20px 60px rgba(0,0,0,0.5),
+            0 0 0 1px rgba(255,255,255,0.1),
+            inset 0 1px 0 rgba(255,255,255,0.08);
         }
-        .card-inner {
+        .accent-line {
+          height: 2px;
+          width: 100%;
+        }
+        .card-body {
+          padding: 18px 20px 16px;
           display: flex;
-          gap: 14px;
-          padding: 18px;
+          flex-direction: column;
+          gap: 8px;
         }
-        .source-dot {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
+        .card-header {
           display: flex;
           align-items: center;
-          justify-content: center;
+          gap: 8px;
+          margin-bottom: 2px;
+        }
+        .source-badge {
           font-size: 10px;
-          font-weight: 800;
-          color: #0d0f14;
-          flex-shrink: 0;
-          letter-spacing: 0.5px;
-          font-family: 'Syne', sans-serif;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 8px;
+          border-radius: 6px;
+          letter-spacing: 1px;
         }
-        .content { flex: 1; min-width: 0; }
-        .title {
-          font-weight: 600;
-          font-size: 15px;
-          color: var(--text);
-          margin-bottom: 3px;
-          line-height: 1.35;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .company {
-          color: var(--accent);
-          font-size: 13px;
-          font-weight: 500;
-          margin-bottom: 10px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-          margin-bottom: 10px;
-        }
-        .tag {
+        .modality-badge {
           font-size: 11px;
           font-weight: 500;
           padding: 3px 9px;
           border-radius: 20px;
-          border: 1px solid var(--border);
-          background: var(--surface2);
-          color: var(--text-muted);
-          white-space: nowrap;
-          letter-spacing: 0.2px;
+          border: 1px solid;
+          margin-left: auto;
         }
-        .location { color: var(--text-muted); }
-        .salary   { color: var(--green); border-color: #34d39933; background: #34d39911; }
+        .title {
+          font-weight: 600;
+          font-size: 15px;
+          color: var(--text);
+          line-height: 1.35;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .company {
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--neon-a);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+        }
+        .tag {
+          font-size: 11px;
+          font-weight: 400;
+          padding: 3px 9px;
+          border-radius: 20px;
+          border: 1px solid var(--border);
+          background: rgba(255,255,255,0.03);
+          color: var(--text-mid);
+          white-space: nowrap;
+        }
+        .salary {
+          color: var(--neon-d);
+          border-color: rgba(255,209,102,0.25);
+          background: rgba(255,209,102,0.06);
+        }
         .description {
           font-size: 12px;
-          color: var(--text-muted);
+          color: var(--text-dim);
           line-height: 1.5;
           font-weight: 300;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+        .card-footer {
+          margin-top: 4px;
+          padding-top: 10px;
+          border-top: 1px solid var(--border);
+        }
+        .view-link {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text-dim);
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.3px;
+          transition: color 0.2s;
+        }
+        .card:hover .view-link {
+          color: var(--neon-b);
         }
       `}</style>
     </button>
