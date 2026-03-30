@@ -107,8 +107,9 @@ export async function searchJobs(searchTerm: string, extraFilter: any = {}) {
     const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
     if (!mongoConnected) {
-      const jobs = Array.from(inMemoryJobs.values());
-      return jobs.filter(
+      const allJobs = Array.from(inMemoryJobs.values());
+      const filtered = applyInMemoryFilter(allJobs, extraFilter);
+      return filtered.filter(
         (job) =>
           searchRegex.test(job.title) ||
           searchRegex.test(job.description || '') ||
@@ -125,6 +126,7 @@ export async function searchJobs(searchTerm: string, extraFilter: any = {}) {
     const { $or: extraOr, ...restFilter } = extraFilter;
     const mongoFilter: any = { ...restFilter };
 
+    // Combinar el $or de búsqueda de texto con el $or de modalidad (si existe)
     if (extraOr) {
       mongoFilter.$and = [{ $or: extraOr }, { $or: searchOr }];
     } else {
@@ -172,6 +174,10 @@ function applyInMemoryFilter(jobs: any[], filter: any): any[] {
           return matchCondition(job, cond);
         });
         if (!matches) return false;
+      } else if (key === '$nor') {
+        // $nor: ninguna de las condiciones debe cumplirse
+        const anyMatches = (value as any[]).some((cond) => matchCondition(job, cond));
+        if (anyMatches) return false;
       } else if (typeof value === 'object' && value !== null) {
         if (!matchFieldFilter(String(job[key] ?? ''), value as any)) return false;
       } else {

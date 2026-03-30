@@ -21,29 +21,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Filtro por modalidad: "Remoto", "Híbrido", "Presencial"
     if (modality) {
       const modes = (modality as string).split(',').map((m) => m.trim());
-      const onlyRemoto = modes.includes('Remoto') && !modes.includes('Híbrido');
-      const orConditions: any[] = [];
+      const onlyRemoto = modes.length === 1 && /remot/i.test(modes[0]);
 
-      for (const mode of modes) {
-        if (/remot/i.test(mode)) {
-          orConditions.push({ modality: { $regex: 'remot|home.?office', $options: 'i' } });
-        } else if (/h[ií]brid/i.test(mode)) {
-          orConditions.push({ modality: { $regex: 'h[ií]brid', $options: 'i' } });
-        } else if (/presencial/i.test(mode)) {
-          orConditions.push({ modality: { $regex: 'presencial|on.?site|oficina', $options: 'i' } });
+      if (onlyRemoto) {
+        // modality debe contener "remot" y NO contener "híbrid"
+        extraFilter.modality = { $regex: 'remot|home.?office', $options: 'i' };
+        extraFilter.$nor = [{ modality: { $regex: 'h[ií]brid', $options: 'i' } }];
+      } else {
+        const orConditions: any[] = [];
+        for (const mode of modes) {
+          if (/remot/i.test(mode)) {
+            orConditions.push({ modality: { $regex: 'remot|home.?office', $options: 'i' } });
+          } else if (/h[ií]brid/i.test(mode)) {
+            orConditions.push({ modality: { $regex: 'h[ií]brid', $options: 'i' } });
+          } else if (/presencial/i.test(mode)) {
+            orConditions.push({ modality: { $regex: 'presencial|on.?site|oficina', $options: 'i' } });
+          }
         }
-      }
-
-      if (orConditions.length > 0) {
-        // Si solo Remoto: combinar con exclusión explícita de híbridos via $and
-        if (onlyRemoto) {
-          extraFilter.$and = [
-            { $or: orConditions },
-            { modality: { $not: { $regex: 'h[ií]brid', $options: 'i' } } },
-          ];
-        } else {
-          extraFilter.$or = orConditions;
-        }
+        if (orConditions.length > 0) extraFilter.$or = orConditions;
       }
     }
 
